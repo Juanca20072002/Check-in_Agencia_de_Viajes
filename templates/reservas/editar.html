@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='crud.css') }}">
+<h2>Editar Reserva</h2>
+<form class="form-crud" method="post">
+  <label>Nombre: <input name="nombre" value="{{ reserva.nombre }}" required></label><br>
+  <label>Email: <input name="email" type="email" value="{{ reserva.email }}" required></label><br>
+  <label>Destino: <input name="destino" value="{{ reserva.destino }}" required></label><br>
+  <label>Fecha: <input name="fecha" type="date" value="{{ reserva.fecha }}" required></label><br>
+  <label>Mensaje: <textarea name="mensaje">{{ reserva.mensaje }}</textarea></label><br>
+  <button class="btn-crud" type="submit">Actualizar</button>
+  <a class="btn-crud btn-crud-outline" href="{{ url_for('listar_reservas') }}">Cancelar</a>
+</form>
+{% endblock %}

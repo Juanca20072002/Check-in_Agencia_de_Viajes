@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Inicio — Viajes Tolima{% endblock %}
+{% block content %}
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg" style="--hero-img:url('https://sdmntprwestus3.oaiusercontent.com/files/00000000-8550-61fd-a335-d87797b96fbd/raw?se=2025-08-18T23%3A38%3A16Z&sp=r&sv=2024-08-04&sr=b&scid=acd04f8a-73b1-5d15-a143-ed37fb296d62&skoid=71e8fa5c-90a9-4c17-827b-14c3005164d6&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-08-18T21%3A12%3A42Z&ske=2025-08-19T21%3A12%3A42Z&sks=b&skv=2024-08-04&sig=lp%2BoJYSqNsoiutoZr2lOLhqGjJpl8SEC%2BuGCNfGq9Zk%3D');"></div>
+    <div class="hero-inner container">
+      <h1>Descubre el Tolima auténtico</h1>
+      <p>Montañas, cafetales, música y gastronomía. Diseña tu aventura con expertos locales.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="{{ url_for('viajes') }}">Ver viajes</a>
+        <a class="btn btn-outline" href="{{ url_for('galeria') }}">Ver galería</a>
+      </div>
+      <ul class="hero-badges">
+        <li>Guías certificados</li>
+        <li>Rutas personalizadas</li>
+        <li>Soporte 24/7</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Destinos destacados -->
+  <section class="section container">
+    <div class="section-head">
+      <h2>Destinos destacados</h2>
+      <p>Lo mejor del departamento, seleccionado para ti.</p>
+    </div>
+
+    <div class="grid cards-3">
+      <article class="card">
+        <div class="card-media" aria-hidden="true"></div>
+        <div class="card-body">
+          <h3>Sierra Nevada del Tolima</h3>
+          <p>Senderismo entre páramos, vistas volcánicas y lagunas de altura.</p>
+          <a class="btn btn-sm" href="{{ url_for('viajes') }}">Explorar</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" aria-hidden="true"></div>
+        <div class="card-body">
+          <h3>Parque Los Nevados</h3>
+          <p>Naturaleza en estado puro: termales, frailejones y biodiversidad.</p>
+          <a class="btn btn-sm" href="{{ url_for('viajes') }}">Explorar</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" aria-hidden="true"></div>
+        <div class="card-body">
+          <h3>Ibagué cultural</h3>
+          <p>Música, gastronomía y tradición en la capital musical de Colombia.</p>
+          <a class="btn btn-sm" href="{{ url_for('viajes') }}">Explorar</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Beneficios -->
+  <section class="section container">
+    <div class="grid features">
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">🗺️</div>
+        <h3>Itinerarios a medida</h3>
+        <p>Adaptamos cada viaje a tu ritmo y preferencias.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">🧭</div>
+        <h3>Guías locales</h3>
+        <p>Conocimiento del territorio y seguridad en ruta.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">🏕️</div>
+        <h3>Experiencias reales</h3>
+        <p>Conecta con la cultura y la naturaleza del Tolima.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Llamado a la acción con formulario -->
+  <section class="section container cta">
+    <div class="cta-box">
+      <div class="cta-copy">
+        <h2>Planea tu próxima aventura</h2>
+        <p>Cuéntanos qué te interesa y te contactamos con una propuesta.</p>
+      </div>
+      <form class="form" action="{{ url_for('enviar_respuesta') }}" method="post">
+        <div class="row">
+          <label class="control"><input type="radio" name="interior-montañas" value="interior" checked> Interior del Tolima</label>
+          <label class="control"><input type="radio" name="interior-montañas" value="montañas"> Montañas del Tolima</label>
+        </div>
+        <div class="row">
+          <label class="control"><input type="checkbox" name="experiencia" value="cultura" checked> Cultura</label>
+          <label class="control"><input type="checkbox" name="experiencia" value="naturaleza"> Naturaleza</label>
+          <label class="control"><input type="checkbox" name="experiencia" value="aventura"> Aventura</label>
+        </div>
+        <div class="row">
+          <input class="input" type="text" name="nombre" placeholder="Tu nombre" required>
+          <input class="input" type="email" name="email" placeholder="Tu correo" required>
+        </div>
+        <button class="btn btn-primary" type="submit">Quiero mi plan</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="container section section--small">
+    <p class="muted">© 2025 Viajes Tolima. <a href="https://com17085.wordpress.com/inicio/" target="_blank" rel="noopener noreferrer">Más información</a></p>
+  </section>
+{% endblock %}

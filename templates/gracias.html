@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Gracias</title>
+      <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+      <h1>¡Gracias por tu interés!</h1>
+      <p>Nombre: <strong>{{ nombre }}</strong></p>
+      <p>Correo: <strong>{{ email }}</strong></p>
+      {% if experiencias %}
+        <p>Experiencias seleccionadas:</p>
+        <ul>
+          {% for exp in experiencias %}
+            <li>{{ exp }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No seleccionaste experiencias.</p>
+      {% endif %}
+
+      <p><a href="{{ url_for('index') }}">Volver al inicio</a></p>
+  </body>
+</html>
