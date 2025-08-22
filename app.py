@@ -133,7 +133,7 @@ def nuevo_viaje():
         db.session.add(viaje)
         db.session.commit()
         flash("Viaje creado exitosamente.")
-        return redirect(url_for("viajes"))
+        return redirect(url_for("listar_viajes"))
     return render_template("viajes/nuevo.html")
 
 @app.route("/viajes/<int:id>/editar", methods=["GET", "POST"])
@@ -152,7 +152,7 @@ def editar_viaje(id):
             viaje.imagen = filename
         db.session.commit()
         flash("Viaje actualizado.")
-        return redirect(url_for("viajes"))
+        return redirect(url_for("listar_viajes"))
     return render_template("viajes/editar.html", viaje=viaje)
 
 @app.route("/viajes/<int:id>/eliminar", methods=["POST"])
@@ -162,7 +162,7 @@ def eliminar_viaje(id):
     db.session.delete(viaje)
     db.session.commit()
     flash("Viaje eliminado.")
-    return redirect(url_for("viajes"))
+    return redirect(url_for("listar_viajes"))
 
 @app.route("/galeria")
 def galeria():
