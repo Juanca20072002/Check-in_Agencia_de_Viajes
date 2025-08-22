@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='detalle_viaje.css') }}">
+
+<div class="detalle-viaje-container">
+    <div class="galeria-viaje">
+        <img class="img-principal" src="{{ url_for('static', filename='img/' ~ viaje.imagen) }}" alt="{{ viaje.nombre }}">
+        <!-- Si tienes más imágenes, agrégalas aquí como miniaturas -->
+    </div>
+    <div class="info-viaje">
+        <h2>{{ viaje.nombre }}</h2>
+        <div class="estrellas">
+            ★★★★☆
+        </div>
+        <div class="tags">
+            <span>Fechas: {{ viaje.fecha }}</span>
+            <span>Duración: {{ viaje.duracion or 'Consultar' }}</span>
+        </div>
+        <p>{{ viaje.descripcion }}</p>
+        <div class="acciones">
+            <a href="#reserva" class="btn btn-primary">Reservar ahora</a>
+            <a href="#" class="btn btn-outline">Compartir</a>
+        </div>
+    </div>
+</div>
+<div class="tarjeta-reserva" id="reserva">
+    <h3>Tu opción seleccionada</h3>
+    <div class="reserva-info">
+        <div>
+            <strong>Precio por persona:</strong>
+            <span class="precio">${{ viaje.precio }}</span>
+        </div>
+        <div>
+            <strong>Incluye:</strong>
+            <ul>
+                <li>Transporte</li>
+                <li>Alojamiento</li>
+                <li>Guía turístico</li>
+                <!-- Agrega más detalles según tu modelo -->
+            </ul>
+        </div>
+        <a href="{{ url_for('nueva_reserva') }}?viaje_id={{ viaje.id }}" class="btn btn-success">Reservar ahora</a>
+    </div>
+</div>
+{% endblock %}

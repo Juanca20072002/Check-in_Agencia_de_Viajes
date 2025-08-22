@@ -5,7 +5,13 @@
 <form class="form-crud" method="post">
   <label>Nombre: <input name="nombre" value="{{ reserva.nombre }}" required></label><br>
   <label>Email: <input name="email" type="email" value="{{ reserva.email }}" required></label><br>
-  <label>Destino: <input name="destino" value="{{ reserva.destino }}" required></label><br>
+  <label>Destino: 
+  <select name="viaje_id" required>
+        {% for viaje in viajes %}
+            <option value="{{ viaje.id }}" {% if reserva.viaje_id == viaje.id %}selected{% endif %}>{{ viaje.nombre }}</option>
+        {% endfor %}
+    </select>
+  </label><br>
   <label>Fecha: <input name="fecha" type="date" value="{{ reserva.fecha }}" required></label><br>
   <label>Mensaje: <textarea name="mensaje">{{ reserva.mensaje }}</textarea></label><br>
   <button class="btn-crud" type="submit">Actualizar</button>

@@ -9,6 +9,6 @@
   <label>Precio: <input name="precio" type="number" step="0.01"></label><br>
   <label>Imagen: <input name="imagen" type="file" accept="image/*"></label><br>
   <button class="btn-crud" type="submit">Guardar</button>
-  <a class="btn-crud btn-crud-outline" href="{{ url_for('viajes') }}">Cancelar</a>
+  <a class="btn-crud btn-crud-outline" href="{{ url_for('listar_viajes') }}">Cancelar</a>
 </form>
 {% endblock %}

@@ -12,14 +12,12 @@
       <div class="container header-inner">
         <a class="logo" href="{{ url_for('index') }}" aria-label="Inicio">
           <img src="{{ url_for('static', filename='img/Check-in.png') }}" alt="Logo Viajes Tolima">
-          <div class="logo-text">
-        </div>
+          <div class="logo-text"></div>
         </a>
-
         <nav class="main-nav" aria-label="Principal">
           <ul>
             <li><a href="{{ url_for('index') }}">Inicio</a></li>
-            <li><a href="{{ url_for('viajes') }}">Viajes</a></li>
+            <li><a href="{{ url_for('listar_viajes') }}">Viajes</a></li>
             <li><a href="{{ url_for('galeria') }}">Galería</a></li>
             <li><a href="{{ url_for('nosotros') }}">Nosotros</a></li>
             <li><a href="{{ url_for('listar_reservas') }}">Reservas</a></li>
@@ -27,7 +25,6 @@
         </nav>
       </div>
     </header>
-
     <main class="container">
       {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -38,8 +35,7 @@
           </ul>
         {% endif %}
       {% endwith %}
-
       {% block content %}{% endblock %}
     </main>
   </body>
-  </html>
+</html>

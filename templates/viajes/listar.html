@@ -25,13 +25,13 @@
       </div>
       <div class="viaje-card-precio">
         {% if v.precio %}
-          $ {{ "{:,}".format(v.precio) }}
+          $ {{ v.precio }}
         {% else %}
           Consultar
         {% endif %}
       </div>
       <div class="viaje-card-btns">
-        <a class="btn-crud" href="#">Ver más</a>
+        <a class="btn-crud" href="{{ url_for('detalle_viaje', id=v.id) }}">Ver más</a>
         <a class="btn-crud" href="{{ url_for('editar_viaje', id=v.id) }}">Editar</a>
         <form action="{{ url_for('eliminar_viaje', id=v.id) }}" method="post" style="display:inline;">
           <button class="btn-crud btn-crud-outline" type="submit" onclick="return confirm('¿Eliminar viaje?')">Eliminar</button>

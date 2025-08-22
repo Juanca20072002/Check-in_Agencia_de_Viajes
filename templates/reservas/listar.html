@@ -1,27 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='crud.css') }}">
 <h2>Reservas</h2>
-<a href="{{ url_for('nueva_reserva') }}" class="btn">Nueva Reserva</a>
-<table class="table-crud">
-  <tr>
-    <th>ID</th><th>Nombre</th><th>Email</th><th>Destino</th><th>Fecha</th><th>Mensaje</th><th>Acciones</th>
-  </tr>
-  {% for r in reservas %}
-  <tr>
-    <td>{{ r.id }}</td>
-    <td>{{ r.nombre }}</td>
-    <td>{{ r.email }}</td>
-    <td>{{ r.destino }}</td>
-    <td>{{ r.fecha }}</td>
-    <td>{{ r.mensaje }}</td>
-    <td>
-      <a class="btn-crud" href="{{ url_for('editar_reserva', id=r.id) }}">Editar</a>
-      <form action="{{ url_for('eliminar_reserva', id=r.id) }}" method="post" style="display:inline;">
-        <button class="btn-crud btn-crud-outline" type="submit" onclick="return confirm('¿Eliminar reserva?')">Eliminar</button>
-      </form>
-    </td>
-  </tr>
+<div class="reservas-grid">
+  {% for reserva in reservas %}
+  <div class="reserva-card horizontal">
+    <div class="reserva-img">
+      {% if reserva.viaje.imagen %}
+        <img src="{{ url_for('static', filename='img/' ~ reserva.viaje.imagen) }}" alt="Imagen de {{ reserva.viaje.nombre }}">
+      {% else %}
+        <img src="https://via.placeholder.com/220x160?text=Sin+imagen" alt="Sin imagen">
+      {% endif %}
+    </div>
+    <div class="reserva-info">
+      <h3>{{ reserva.viaje.nombre }}</h3>
+      <p><strong>Nombre:</strong> {{ reserva.nombre }}</p>
+      <p><strong>Email:</strong> {{ reserva.email }}</p>
+      <p><strong>Fecha:</strong> {{ reserva.fecha }}</p>
+      <p><strong>Mensaje:</strong> {{ reserva.mensaje }}</p>
+      <div class="reserva-acciones">
+        <a class="btn-crud" href="{{ url_for('editar_reserva', id=reserva.id) }}">Editar</a>
+        <a class="btn-crud btn-crud-outline" href="{{ url_for('eliminar_reserva', id=reserva.id) }}">Cancelar Reserva</a>
+      </div>
+    </div>
+  </div>
   {% endfor %}
-</table>
+</div>
 {% endblock %}

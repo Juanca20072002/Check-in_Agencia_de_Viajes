@@ -3,12 +3,12 @@
 {% block content %}
   <!-- Hero -->
   <section class="hero">
-    <div class="hero-bg" style="--hero-img:url('https://sdmntprwestus3.oaiusercontent.com/files/00000000-8550-61fd-a335-d87797b96fbd/raw?se=2025-08-18T23%3A38%3A16Z&sp=r&sv=2024-08-04&sr=b&scid=acd04f8a-73b1-5d15-a143-ed37fb296d62&skoid=71e8fa5c-90a9-4c17-827b-14c3005164d6&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-08-18T21%3A12%3A42Z&ske=2025-08-19T21%3A12%3A42Z&sks=b&skv=2024-08-04&sig=lp%2BoJYSqNsoiutoZr2lOLhqGjJpl8SEC%2BuGCNfGq9Zk%3D');"></div>
+  <div class="hero-bg" style="--hero-img:url('{{ url_for('static', filename='img/Viajes.png') }}');"></div>
     <div class="hero-inner container">
       <h1>Descubre el Tolima auténtico</h1>
       <p>Montañas, cafetales, música y gastronomía. Diseña tu aventura con expertos locales.</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="{{ url_for('viajes') }}">Ver viajes</a>
+        <a class="btn btn-primary" href="{{ url_for('listar_viajes') }}">Ver viajes</a>
         <a class="btn btn-outline" href="{{ url_for('galeria') }}">Ver galería</a>
       </div>
       <ul class="hero-badges">
@@ -32,7 +32,7 @@
         <div class="card-body">
           <h3>Sierra Nevada del Tolima</h3>
           <p>Senderismo entre páramos, vistas volcánicas y lagunas de altura.</p>
-          <a class="btn btn-sm" href="{{ url_for('viajes') }}">Explorar</a>
+          <a class="btn btn-sm" href="{{ url_for('listar_viajes') }}">Explorar</a>
         </div>
       </article>
 
@@ -41,7 +41,7 @@
         <div class="card-body">
           <h3>Parque Los Nevados</h3>
           <p>Naturaleza en estado puro: termales, frailejones y biodiversidad.</p>
-          <a class="btn btn-sm" href="{{ url_for('viajes') }}">Explorar</a>
+          <a class="btn btn-sm" href="{{ url_for('listar_viajes') }}">Explorar</a>
         </div>
       </article>
 
@@ -50,7 +50,7 @@
         <div class="card-body">
           <h3>Ibagué cultural</h3>
           <p>Música, gastronomía y tradición en la capital musical de Colombia.</p>
-          <a class="btn btn-sm" href="{{ url_for('viajes') }}">Explorar</a>
+          <a class="btn btn-sm" href="{{ url_for('listar_viajes') }}">Explorar</a>
         </div>
       </article>
     </div>

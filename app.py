@@ -22,9 +22,10 @@ class Reserva(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    destino = db.Column(db.String(100), nullable=False)
     fecha = db.Column(db.String(20), nullable=False)
     mensaje = db.Column(db.Text, nullable=True)
+    viaje_id = db.Column(db.Integer, db.ForeignKey('viaje.id'), nullable=False)
+    viaje = db.relationship('Viaje', backref=db.backref('reservas', lazy=True))
 
 # Modelo para viajes
 class Viaje(db.Model):
@@ -71,7 +72,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/viajes")
-def viajes():
+def listar_viajes():
     viajes = Viaje.query.all()
     return render_template("viajes/listar.html", viajes=viajes)
 
@@ -136,32 +137,34 @@ def listar_reservas():
 
 @app.route("/reservas/nueva", methods=["GET", "POST"])
 def nueva_reserva():
+    viajes = Viaje.query.all()
     if request.method == "POST":
         nombre = request.form["nombre"]
         email = request.form["email"]
-        destino = request.form["destino"]
+        viaje_id = request.form["viaje_id"]
         fecha = request.form["fecha"]
         mensaje = request.form.get("mensaje")
-        reserva = Reserva(nombre=nombre, email=email, destino=destino, fecha=fecha, mensaje=mensaje)
+        reserva = Reserva(nombre=nombre, email=email, fecha=fecha, mensaje=mensaje, viaje_id=viaje_id)
         db.session.add(reserva)
         db.session.commit()
         flash("Reserva creada exitosamente.")
         return redirect(url_for("listar_reservas"))
-    return render_template("reservas/nueva.html")
+    return render_template("reservas/nueva.html", viajes=viajes)
 
 @app.route("/reservas/<int:id>/editar", methods=["GET", "POST"])
 def editar_reserva(id):
     reserva = Reserva.query.get_or_404(id)
+    viajes = Viaje.query.all()
     if request.method == "POST":
         reserva.nombre = request.form["nombre"]
         reserva.email = request.form["email"]
-        reserva.destino = request.form["destino"]
+        reserva.viaje_id = request.form["viaje_id"]
         reserva.fecha = request.form["fecha"]
         reserva.mensaje = request.form.get("mensaje")
         db.session.commit()
         flash("Reserva actualizada.")
         return redirect(url_for("listar_reservas"))
-    return render_template("reservas/editar.html", reserva=reserva)
+    return render_template("reservas/editar.html", reserva=reserva, viajes=viajes)
 
 @app.route("/reservas/<int:id>/eliminar", methods=["POST"])
 def eliminar_reserva(id):
@@ -170,6 +173,15 @@ def eliminar_reserva(id):
     db.session.commit()
     flash("Reserva eliminada.")
     return redirect(url_for("listar_reservas"))
+
+@app.route("/viajes/<int:id>")
+def detalle_viaje(id):
+    viaje = Viaje.query.get_or_404(id)
+    return render_template("viajes/detalle.html", viaje=viaje)
+
+@app.route("/prueba")
+def prueba():
+    return render_template("prueba.html")
 
 
 with app.app_context():
