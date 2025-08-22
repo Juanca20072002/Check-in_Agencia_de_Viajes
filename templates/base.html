@@ -6,6 +6,7 @@
       <title>{% block title %}Viajes Tolima{% endblock %}</title>
       <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
       <link rel="stylesheet" href="{{ url_for('static', filename='crud.css') }}">
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   </head>
   <body>
     <header class="site-header">
@@ -21,6 +22,14 @@
             <li><a href="{{ url_for('galeria') }}">Galería</a></li>
             <li><a href="{{ url_for('nosotros') }}">Nosotros</a></li>
             <li><a href="{{ url_for('listar_reservas') }}">Reservas</a></li>
+            {% if not current_user.is_authenticated %}
+              <li><a href="{{ url_for('login') }}">Iniciar sesión</a></li>
+            {% else %}
+              <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+              {% if current_user.rol == 'admin' %}
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+              {% endif %}
+            {% endif %}
           </ul>
         </nav>
       </div>

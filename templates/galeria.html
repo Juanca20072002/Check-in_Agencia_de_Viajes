@@ -1,6 +1,18 @@
 {% extends 'base.html' %}
 {% block title %}Galería — Viajes Tolima{% endblock %}
 {% block content %}
-  <h1>Galería</h1>
-  <p>Una selección de imágenes de nuestros viajes.</p>
+<link rel="stylesheet" href="{{ url_for('static', filename='galeria.css') }}">
+<h1 style="text-align:center; margin-bottom:2rem;">Galería de Viajes</h1>
+<div class="galeria-mosaico">
+  {% for i in range(1, 12) %}
+  <div class="galeria-img-card">
+    <div class="galeria-img-bg">
+      <span class="material-icons galeria-icono">image</span>
+      <div class="galeria-hover">
+        <span>Destino {{ i }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
 {% endblock %}

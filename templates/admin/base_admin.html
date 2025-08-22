@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Panel Admin{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body style="background:#f7f9fb;">
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,43 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Usuarios registrados{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='crud.css') }}">
+<div class="dashboard-admin">
+  <h1>Usuarios registrados</h1>
+  <table class="table-crud">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Usuario</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for usuario in usuarios %}
+      <tr>
+        <td>{{ usuario.id }}</td>
+        <td>{{ usuario.username }}</td>
+        <td>
+          {% if usuario.rol == 'admin' %}
+            <span style="color:#0d6efd; font-weight:bold;">Administrador</span>
+          {% else %}
+            Usuario
+          {% endif %}
+        </td>
+        <td>
+          {# Aquí puedes agregar acciones como editar/eliminar si lo deseas #}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" style="text-align:center;">No hay usuarios registrados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div style="margin-top:2rem;">
+    <a class="btn-crud" href="{{ url_for('dashboard') }}">Volver al dashboard</a>
+  </div>
+</div>
+{% endblock %}

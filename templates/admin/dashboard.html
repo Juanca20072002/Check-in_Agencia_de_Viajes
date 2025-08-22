@@ -1,0 +1,70 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard — Admin{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+<style>
+
+</style>
+<div class="dashboard-container">
+  <div class="dashboard-sidebar">
+    <div class="avatar">
+      <span>👤</span>
+    </div>
+    <div class="sidebar-user">
+      <strong>{{ current_user.username }}</strong><br>
+      <small>{{ current_user.rol|capitalize }}</small>
+    </div>
+    <ul>
+      <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+      <li><a href="{{ url_for('listar_viajes') }}">Viajes</a></li>
+      <li><a href="{{ url_for('listar_reservas') }}">Reservas</a></li>
+      <li><a href="{{ url_for('listar_usuarios') }}">Usuarios</a></li>
+      <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+    </ul>
+  </div>
+  <div class="dashboard-main">
+    <h1 style="margin-bottom:2rem;">Panel de Administración</h1>
+    <div class="dashboard-cards">
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">Total de Viajes</div>
+        <div class="dashboard-card-value">{{ total_viajes }}</div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">Total de Reservas</div>
+        <div class="dashboard-card-value">{{ total_reservas }}</div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">Usuarios registrados</div>
+        <div class="dashboard-card-value">{{ total_usuarios }}</div>
+      </div>
+    </div>
+    <div class="dashboard-section">
+      <h2>Últimas reservas</h2>
+      <table class="table-crud">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Viaje</th>
+            <th>Fecha</th>
+            <th>Mensaje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reserva in ultimas_reservas %}
+          <tr>
+            <td>{{ reserva.nombre }}</td>
+            <td>{{ reserva.viaje.nombre }}</td>
+            <td>{{ reserva.fecha }}</td>
+            <td>{{ reserva.mensaje }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="text-align:center;">No hay reservas recientes.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

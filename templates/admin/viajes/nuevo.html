@@ -1,0 +1,14 @@
+{% extends "base_admin.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='crud.css') }}">
+<h2>Nuevo Viaje</h2>
+<form class="form-crud" method="post" enctype="multipart/form-data">
+  <label>Nombre: <input name="nombre" required></label><br>
+  <label>Descripción: <textarea name="descripcion" required></textarea></label><br>
+  <label>Fecha: <input name="fecha" type="date"></label><br>
+  <label>Precio: <input name="precio" type="number" step="0.01"></label><br>
+  <label>Imagen: <input name="imagen" type="file" accept="image/*"></label><br>
+  <button class="btn-crud" type="submit">Guardar</button>
+  <a class="btn-crud btn-crud-outline" href="{{ url_for('listar_viajes') }}">Cancelar</a>
+</form>
+{% endblock %}

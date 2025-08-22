@@ -1,0 +1,95 @@
+.nosotros-hero {
+  text-align: center;
+  margin: 2.5rem 0 2rem 0;
+}
+.nosotros-hero h1 {
+  font-size: 2.3rem;
+  color: #0d6efd;
+  margin-bottom: 0.7rem;
+}
+.nosotros-hero p {
+  color: #444;
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.fundadores {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  margin: 3rem 0 2rem 0;
+  flex-wrap: wrap;
+}
+
+.fundador-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 2.2rem 2rem 1.5rem 2rem;
+  text-align: center;
+  width: 250px;
+  transition: box-shadow 0.2s;
+}
+
+.fundador-card:hover {
+  box-shadow: 0 8px 32px rgba(13,110,253,0.10);
+}
+
+.fundador-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e9ecef 60%, #0d6efd 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem auto;
+}
+
+.fundador-avatar .material-icons {
+  font-size: 54px;
+  color: #fff;
+}
+
+.fundador-card h3 {
+  margin: 0 0 0.4rem 0;
+  color: #0d6efd;
+  font-size: 1.15rem;
+}
+
+.fundador-card p {
+  color: #555;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.mision-vision {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin: 2.5rem 0 2.5rem 0;
+  flex-wrap: wrap;
+}
+
+.mision, .vision {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  padding: 2rem 1.5rem;
+  max-width: 370px;
+  min-width: 260px;
+  flex: 1 1 260px;
+}
+
+.mision h2, .vision h2 {
+  color: #0d6efd;
+  margin-bottom: 0.7rem;
+  font-size: 1.3rem;
+}
+
+.mision p, .vision p {
+  color: #444;
+  font-size: 1.05rem;
+  margin: 0;
+}

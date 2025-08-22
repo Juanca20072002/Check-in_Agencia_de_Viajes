@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block content %}
+<div class="form-crud" style="max-width:380px; margin-top:3rem;">
+  <h2 style="text-align:center; margin-bottom:1.5rem;">Iniciar sesión</h2>
+  <form method="post" autocomplete="off">
+    <label>Usuario:
+      <input type="text" name="username" placeholder="Tu usuario" required autofocus>
+    </label>
+    <label>Contraseña:
+      <input type="password" name="password" placeholder="Tu contraseña" required>
+    </label>
+    <button class="btn-crud" type="submit" style="width:100%; margin-top:1rem;">Entrar</button>
+  </form>
+  <div style="margin-top:1.5rem; text-align:center;">
+    <a href="{{ url_for('register') }}" style="color:#0d6efd; text-decoration:underline;">¿No tienes cuenta? Regístrate</a>
+    <br>
+    <a href="{{ url_for('forgot_password') }}" style="color:#0d6efd; text-decoration:underline;">¿Olvidaste tu contraseña?</a>
+  </div>
+</div>
+{% endblock %}
