@@ -12,15 +12,17 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
 # Configuración de la base de datos
-POSTGRES_USER = "postgres"
-POSTGRES_PW = "12345"
-POSTGRES_DB = "reservasdb"
-POSTGRES_HOST = "localhost"
-POSTGRES_PORT = "5432"
+# Usa variables de entorno para la base de datos
+POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
+POSTGRES_PW = os.environ.get("POSTGRES_PW", "12345")
+POSTGRES_DB = os.environ.get("POSTGRES_DB", "reservasdb")
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     f"postgresql://{POSTGRES_USER}:{POSTGRES_PW}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 )
+print("DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])  # <-- Agrega esta línea aquí
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -203,8 +205,9 @@ def nueva_reserva():
 @app.route("/reservas/<int:id>/editar", methods=["GET", "POST"])
 @login_required
 def editar_reserva(id):
-    # Si quieres restringir solo al dueño o admin, agrega lógica aquí
     reserva = Reserva.query.get_or_404(id)
+    if reserva.usuario_id != current_user.id and current_user.rol != 'admin':
+        abort(403)
     viajes = Viaje.query.all()
     if request.method == "POST":
         reserva.nombre = request.form["nombre"]
@@ -218,8 +221,11 @@ def editar_reserva(id):
     return render_template("reservas/editar.html", reserva=reserva, viajes=viajes)
 
 @app.route("/reservas/<int:id>/eliminar", methods=["POST"])
+@login_required
 def eliminar_reserva(id):
     reserva = Reserva.query.get_or_404(id)
+    if reserva.usuario_id != current_user.id and current_user.rol != 'admin':
+        abort(403)
     db.session.delete(reserva)
     db.session.commit()
     flash("Reserva eliminada.")
@@ -251,14 +257,6 @@ def logout():
     logout_user()
     flash('Sesión cerrada')
     return redirect(url_for('index'))
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.rol != 'admin':
-            abort(403)
-        return f(*args, **kwargs)
-    return decorated_function
 
 @app.route('/dashboard')
 @admin_required
