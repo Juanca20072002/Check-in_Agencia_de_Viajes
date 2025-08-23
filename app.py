@@ -173,9 +173,13 @@ def nosotros():
     return render_template("nosotros.html")
 
 @app.route("/reservas")
+@login_required
 def listar_reservas():
-    reservas = Reserva.query.all()
-    return render_template("reservas/listar.html", reservas=reservas)
+    if current_user.rol == 'admin':
+        reservas = Reserva.query.all()
+    else:
+        reservas = Reserva.query.filter_by(usuario_id=current_user.id).all()
+    return render_template('reservas/listar.html', reservas=reservas)
 
 @app.route('/reservas/nueva', methods=['GET', 'POST'])
 @login_required
