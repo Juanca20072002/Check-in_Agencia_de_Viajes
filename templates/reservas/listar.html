@@ -19,7 +19,9 @@
       <p><strong>Mensaje:</strong> {{ reserva.mensaje }}</p>
       <div class="reserva-acciones">
         <a class="btn-crud" href="{{ url_for('editar_reserva', id=reserva.id) }}">Editar</a>
-        <a class="btn-crud btn-crud-outline" href="{{ url_for('eliminar_reserva', id=reserva.id) }}">Cancelar Reserva</a>
+        <form action="{{ url_for('eliminar_reserva', id=reserva.id) }}" method="post" style="display:inline;">
+          <button type="submit" class="btn-crud btn-crud-outline" onclick="return confirm('¿Seguro que deseas cancelar la reserva?');">Cancelar Reserva</button>
+        </form>
       </div>
     </div>
   </div>
