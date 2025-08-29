@@ -3,7 +3,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='crud_viajes.css') }}">
 
 <h2>Catálogo de Viajes</h2>
-<a href="{{ url_for('nuevo_viaje') }}" class="btn" style="margin-bottom:18px;">Nuevo Viaje</a>
+{% if current_user.is_authenticated and current_user.rol == 'admin' %}
+  <a href="{{ url_for('nuevo_viaje') }}" class="btn" style="margin-bottom:18px;">Nuevo Viaje</a>
+{% endif %}
 
 <div class="viajes-grid">
   {% for v in viajes %}
@@ -35,11 +37,11 @@
         {% if current_user.is_authenticated and current_user.rol == 'admin' %}
           <a href="{{ url_for('editar_viaje', id=v.id) }}" class="btn-crud">Editar</a>
         {% endif %}
-        <form action="{{ url_for('eliminar_viaje', id=v.id) }}" method="post" style="display:inline;">
-        {% if current_user.is_authenticated and current_user.rol == 'admin' %}  
-          <button class="btn-crud btn-crud-outline" type="submit" onclick="return confirm('¿Eliminar viaje?')">Eliminar</button>
+        {% if current_user.is_authenticated and current_user.rol == 'admin' %}
+          <form action="{{ url_for('eliminar_viaje', id=v.id) }}" method="post" style="display:inline;">
+            <button class="btn-crud btn-crud-outline" type="submit" onclick="return confirm('¿Eliminar viaje?')">Eliminar</button>
+          </form>
         {% endif %}
-        </form>
       </div>
     </div>
   </div>

@@ -7,6 +7,9 @@ from flask import abort
 from flask_login import current_user
 from flask_migrate import Migrate
 import os
+import smtplib
+from email.message import EmailMessage
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
@@ -29,6 +32,50 @@ migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+# Configuración de correo (Gmail)
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")  # tu correo gmail
+SMTP_PASS = os.environ.get("SMTP_PASS", "")  # App Password de Gmail
+
+# Serializer para tokens de recuperación
+RESET_TOKEN_SALT = os.environ.get("RESET_TOKEN_SALT", "reset-password-salt")
+
+def _get_serializer():
+    return URLSafeTimedSerializer(app.secret_key)
+
+def send_reset_email(usuario, reset_url):
+    if not SMTP_USER or not SMTP_PASS:
+        # Si no hay credenciales configuradas, no intentamos enviar
+        print("SMTP_USER/SMTP_PASS no configurados; omitiendo envío de correo.")
+        return False
+    msg = EmailMessage()
+    msg["Subject"] = "Restablecer tu contraseña"
+    msg["From"] = SMTP_USER
+    # Usamos username como email registrado
+    msg["To"] = usuario.username
+    texto = (
+        f"Hola,\n\nPara restablecer tu contraseña, haz clic en el siguiente enlace:\n{reset_url}\n\n"
+        "Si no solicitaste este cambio, ignora este correo.\n"
+    )
+    html = f"""
+    <p>Hola,</p>
+    <p>Para restablecer tu contraseña, haz clic en el siguiente enlace:</p>
+    <p><a href="{reset_url}">Restablecer contraseña</a></p>
+    <p>Si no solicitaste este cambio, ignora este correo.</p>
+    """
+    msg.set_content(texto)
+    msg.add_alternative(html, subtype="html")
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(SMTP_USER, SMTP_PASS)
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        print("Error enviando correo:", e)
+        return False
 
 class Reserva(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -185,13 +232,41 @@ def listar_reservas():
 @login_required
 def nueva_reserva():
     # solo usuario autenticado
+    LIMITE_RESERVAS_POR_USUARIO = 7
+
+    # Chequeo de límite antes de mostrar el formulario
+    total_usuario = Reserva.query.filter_by(usuario_id=current_user.id).count()
+    if total_usuario >= LIMITE_RESERVAS_POR_USUARIO:
+        flash(f"Has alcanzado el límite de {LIMITE_RESERVAS_POR_USUARIO} reservas. Cancela alguna para crear una nueva.")
+        return redirect(url_for("listar_reservas"))
+
     viajes = Viaje.query.all()
     if request.method == "POST":
+        # Revalidar por seguridad antes de insertar
+        total_usuario = Reserva.query.filter_by(usuario_id=current_user.id).count()
+        if total_usuario >= LIMITE_RESERVAS_POR_USUARIO:
+            flash(f"Has alcanzado el límite de {LIMITE_RESERVAS_POR_USUARIO} reservas. Cancela alguna para crear una nueva.")
+            return redirect(url_for("listar_reservas"))
+
         nombre = request.form["nombre"]
         email = request.form["email"]
-        viaje_id = request.form["viaje_id"]
+        viaje_id = int(request.form["viaje_id"])  # asegurar tipo entero para comparar
         fecha = request.form["fecha"]
         mensaje = request.form.get("mensaje")
+
+        # Validación: el usuario no puede tener 2 reservas en la misma fecha
+        duplicada = Reserva.query.filter_by(usuario_id=current_user.id, fecha=fecha).first()
+        if duplicada:
+            flash("Ya tienes una reserva para esa fecha. Elige otra fecha o edita la existente.")
+            return redirect(url_for("listar_reservas"))
+
+        # Validación adicional: mismo viaje en la misma fecha
+        mismo_viaje_misma_fecha = Reserva.query.filter_by(
+            usuario_id=current_user.id, viaje_id=viaje_id, fecha=fecha
+        ).first()
+        if mismo_viaje_misma_fecha:
+            flash("Ya tienes una reserva para ese mismo viaje en esa fecha.")
+            return redirect(url_for("listar_reservas"))
         reserva = Reserva(
             nombre=nombre,
             email=email,
@@ -214,11 +289,38 @@ def editar_reserva(id):
         abort(403)
     viajes = Viaje.query.all()
     if request.method == "POST":
-        reserva.nombre = request.form["nombre"]
-        reserva.email = request.form["email"]
-        reserva.viaje_id = request.form["viaje_id"]
-        reserva.fecha = request.form["fecha"]
-        reserva.mensaje = request.form.get("mensaje")
+        nuevo_nombre = request.form["nombre"]
+        nuevo_email = request.form["email"]
+        nuevo_viaje_id = int(request.form["viaje_id"])  # asegurar entero
+        nueva_fecha = request.form["fecha"]
+        nuevo_mensaje = request.form.get("mensaje")
+
+        # Validación: evitar duplicar fecha con otra reserva del mismo usuario
+        conflicto = (Reserva.query
+                     .filter(Reserva.usuario_id == reserva.usuario_id,
+                             Reserva.fecha == nueva_fecha,
+                             Reserva.id != reserva.id)
+                     .first())
+        if conflicto:
+            flash("Ya existe otra reserva tuya para esa fecha. Usa una fecha distinta.")
+            return redirect(url_for("editar_reserva", id=reserva.id))
+
+        # Validación adicional: mismo viaje + misma fecha en otra reserva
+        conflicto_viaje_fecha = (Reserva.query
+                                 .filter(Reserva.usuario_id == reserva.usuario_id,
+                                         Reserva.viaje_id == nuevo_viaje_id,
+                                         Reserva.fecha == nueva_fecha,
+                                         Reserva.id != reserva.id)
+                                 .first())
+        if conflicto_viaje_fecha:
+            flash("Ya tienes otra reserva para ese mismo viaje en esa fecha.")
+            return redirect(url_for("editar_reserva", id=reserva.id))
+
+        reserva.nombre = nuevo_nombre
+        reserva.email = nuevo_email
+        reserva.viaje_id = nuevo_viaje_id
+        reserva.fecha = nueva_fecha
+        reserva.mensaje = nuevo_mensaje
         db.session.commit()
         flash("Reserva actualizada.")
         return redirect(url_for("listar_reservas"))
@@ -307,11 +409,54 @@ def register():
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        email = request.form['email']
-        # Aquí iría la lógica para enviar el correo de recuperación
-        flash('Si el correo existe, recibirás instrucciones para restablecer tu contraseña.')
-        return redirect(url_for('login'))
+        email = request.form['email'].strip().lower()
+        # En este sistema, el username es el correo registrado
+        usuario = Usuario.query.filter_by(username=email).first()
+        if usuario:
+            s = _get_serializer()
+            token = s.dumps({"uid": usuario.id}, salt=RESET_TOKEN_SALT)
+            reset_url = url_for('reset_password', token=token, _external=True)
+            send_reset_email(usuario, reset_url)
+    # Mensaje flash neutro para no revelar si el correo existe o no
+    flash('Si tu correo está registrado, te enviamos un enlace para restablecer tu contraseña.')
+    # Mensaje/página genérica para no revelar existencia del correo
+    return redirect(url_for('forgot_password_sent'))
+    # GET: mostrar formulario para digitar correo
     return render_template('forgot_password.html')
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    s = _get_serializer()
+    try:
+        data = s.loads(token, max_age=3600, salt=RESET_TOKEN_SALT)  # 1 hora
+        user_id = data.get('uid')
+    except (BadSignature, SignatureExpired):
+        flash('El enlace de restablecimiento no es válido o ha expirado.')
+        return redirect(url_for('login'))
+
+    usuario = Usuario.query.get_or_404(user_id)
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm = request.form.get('confirm_password')
+        if not password or not confirm:
+            flash('Completa ambos campos.')
+            return render_template('reset_password.html')
+        if password != confirm:
+            flash('Las contraseñas no coinciden.')
+            return render_template('reset_password.html')
+        if len(password) < 6:
+            flash('La contraseña debe tener al menos 6 caracteres.')
+            return render_template('reset_password.html')
+        usuario.set_password(password)
+        db.session.commit()
+        flash('Tu contraseña ha sido restablecida. Ahora puedes iniciar sesión.')
+        return redirect(url_for('login'))
+    return render_template('reset_password.html')
+
+@app.route('/forgot-password/sent')
+def forgot_password_sent():
+    # Página simple de confirmación
+    return render_template('forgot_password_sent.html')
 
 @app.route('/usuarios')
 @admin_required

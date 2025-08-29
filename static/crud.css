@@ -116,10 +116,18 @@ body {
 /* Tarjetas de reservas */
 .reservas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  /* Fuerza 2 columnas por fila en desktop */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2rem;
   margin: 2rem 0;
+  align-items: stretch;           /* Evita alturas inconsistentes */
+  justify-items: stretch;          /* Las tarjetas llenan su celda */
+  grid-auto-rows: auto;            /* Filas con altura automática */
 }
+
+/* Evita desbordes de contenido dentro de celdas de grid */
+.reservas-grid > * { min-width: 0; }
+
 
 .reserva-card {
   background: #fff;
@@ -128,8 +136,10 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-width: 420px;
-  margin: 0 auto;
+  width: 100%;                    /* Ocupa todo el ancho de la celda */
+  margin: 0;                      /* Sin centrado, la grilla ya espacia */
+  max-width: none;
+  height: 100%;                   /* Estira para respetar el gap vertical */
   transition: box-shadow 0.2s;
 }
 
@@ -167,7 +177,7 @@ body {
 /* Tarjeta horizontal de reserva */
 .reserva-card.horizontal {
   flex-direction: row;
-  max-width: 700px;
+  width: 100%;                    /* Que respete el ancho impuesto por la grilla */
   min-height: 180px;
 }
 
@@ -257,6 +267,8 @@ body {
 }
 
 @media (max-width: 800px) {
+  /* En móviles, 1 columna para que no se comprima */
+  .reservas-grid { grid-template-columns: 1fr; }
   .reserva-card.horizontal {
     flex-direction: column;
     max-width: 100%;
