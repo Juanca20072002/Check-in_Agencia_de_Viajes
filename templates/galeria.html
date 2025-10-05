@@ -7,7 +7,8 @@
   {% for i in range(1, 12) %}
   <div class="galeria-img-card">
     <div class="galeria-img-bg">
-      <img src="{{ url_for('static', filename='img/' ~ i ~ '.jpg') }}" alt="Destino {{ i }}" class="galeria-img" />
+      <!-- AQUÍ ESTÁ LA LÍNEA QUE FALTABA -->
+      <img src="{{ url_for('static', filename='img/' ~ i ~ '.jpg') }}" alt="Destino {{ i }}" class="galeria-img">
       <div class="galeria-hover">
         <span>Destino {{ i }}</span>
       </div>
