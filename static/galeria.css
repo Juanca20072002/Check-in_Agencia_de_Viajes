@@ -78,6 +78,17 @@
   position: relative;
 }
 
+/* ⭐ CLASE QUE FALTABA - AGREGA ESTO */
+.galeria-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .galeria-icono {
   font-size: 64px;
   color: #b0b0b0;
@@ -98,6 +109,7 @@
   transition: opacity 0.2s;
   font-weight: 500;
   letter-spacing: 0.5px;
+  z-index: 2;
 }
 
 .galeria-img-card:hover .galeria-hover {
@@ -106,4 +118,11 @@
 
 .galeria-img-card:hover .galeria-icono {
   opacity: 0.2;
+}
+
+.galeria-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
