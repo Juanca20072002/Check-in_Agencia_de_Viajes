@@ -14,18 +14,22 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
-# Configuración de la base de datos
-# Usa variables de entorno para la base de datos
-POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
-POSTGRES_PW = os.environ.get("POSTGRES_PW", "12345")
-POSTGRES_DB = os.environ.get("POSTGRES_DB", "reservasdb")
-POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"postgresql://{POSTGRES_USER}:{POSTGRES_PW}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
-)
-print("DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])  # <-- Agrega esta línea aquí
+# Configuración de la base de datos
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+    print("DB URI:", DATABASE_URL)
+else:
+    POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
+    POSTGRES_PW = os.environ.get("POSTGRES_PW", "12345")
+    POSTGRES_DB = os.environ.get("POSTGRES_DB", "reservasdb")
+    POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+    POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"postgresql://{POSTGRES_USER}:{POSTGRES_PW}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+    )
+    print("DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
