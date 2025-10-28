@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python cache/virtualenv
+.venv/
+venv/
+ENV/
+.env
+
+# Git
+.git/
+.gitignore
+
+# Byte-compiled / optimized / DLL files
+*.pyo
+*.pyd
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Alembic cache
+migrations/**/__pycache__/

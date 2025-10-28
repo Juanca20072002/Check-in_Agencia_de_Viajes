@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: viajes_db
+    environment:
+      POSTGRES_USER: reservas
+      POSTGRES_PASSWORD: reservas
+      POSTGRES_DB: reservasdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reservas -d reservasdb -h localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: ${DOCKERHUB_USERNAME:-youruser}/check-in-agencia:latest
+    container_name: viajes_web
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://reservas:reservas@db:5432/reservasdb
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+      FLASK_ENV: production
+      PORT: "5000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "80:5000"
+    volumes:
+      - uploads:/app/static/img
+
+volumes:
+  pgdata:
+  uploads:
