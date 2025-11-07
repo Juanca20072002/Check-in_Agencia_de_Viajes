@@ -34,9 +34,13 @@ print('Timeout esperando la base de datos')
 sys.exit(1)
 PY
 
-# Aplicar migraciones
+# Aplicar migraciones (no fatales: si fallan, continuamos y dejamos que la app arranque)
 echo "Aplicando migraciones Alembic..."
-flask db upgrade || { echo "Fallo al aplicar migraciones"; exit 1; }
+if flask db upgrade; then
+    echo "Migraciones aplicadas"
+else
+    echo "Fallo al aplicar migraciones; continuando arranque (temporal)"
+fi
 
 # Iniciar Gunicorn
 echo "Iniciando Gunicorn..."
