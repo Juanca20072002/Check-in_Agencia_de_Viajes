@@ -24,6 +24,12 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://reservas:reservas@db:5432/reservasdb
+      # Variables fallback usadas por app.py si no hay DATABASE_URL
+      POSTGRES_USER: reservas
+      POSTGRES_PW: reservas
+      POSTGRES_DB: reservasdb
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
       FLASK_SECRET_KEY: dev-secret-key
       FLASK_ENV: production
       PORT: "5000"

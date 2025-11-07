@@ -15,12 +15,13 @@ services:
       retries: 10
 
   web:
-    image: ${DOCKERHUB_USERNAME:-youruser}/check-in-agencia:latest
+    image: ${DOCKERHUB_USERNAME:-juancaing}/check-in-agencia:${APP_IMAGE_TAG:-latest}
     container_name: viajes_web
     restart: unless-stopped
     environment:
+      # Cadena directa para SQLAlchemy (principal)
       DATABASE_URL: postgresql://reservas:reservas@db:5432/reservasdb
-      # Variables fallback usadas por app.py si no hay DATABASE_URL
+      # Fallbacks usados por app.py si faltara DATABASE_URL
       POSTGRES_USER: reservas
       POSTGRES_PW: reservas
       POSTGRES_DB: reservasdb

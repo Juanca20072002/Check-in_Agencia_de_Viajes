@@ -154,6 +154,124 @@ Notas:
 - En producción, los volúmenes `pgdata` y `uploads` preservan datos y archivos subidos.
 - Si tienes dominio y correo, considera Caddy/Traefik para HTTPS con Let’s Encrypt.
 
+## Despliegue gratuito sin Render (Koyeb / Fly.io + Neon Postgres)
+
+Si ya no puedes usar Render, una alternativa free estable es:
+
+- App (contenedor Docker) en Koyeb o Fly.io.
+- Base de datos Postgres serverless en Neon (también puedes usar Supabase o Railway Postgres).
+
+La app ya está lista para producción con Gunicorn y hace `flask db upgrade` al arrancar. Solo necesitas definir `DATABASE_URL` y `FLASK_SECRET_KEY` en el proveedor.
+
+### 1) Crear Postgres en Neon
+
+1. Ve a https://neon.tech/ y crea un proyecto Postgres gratuito.
+2. Copia el connection string en formato SQLAlchemy:
+  - Formato: `postgresql://<user>:<password>@<host>:<port>/<db>`
+  - Ejemplo: `postgresql://neondb_owner:xxxxx@ep-abc-123.us-east-2.aws.neon.tech/neondb`
+3. Importar el respaldo inicial (opcional):
+  - Opción simple: en el panel de Neon, abre el SQL Editor y pega el contenido de `reservasdb.sql`.
+  - Opción con Docker (sin instalar psql local):
+
+```powershell
+# 1) Entra a la carpeta del proyecto donde está reservasdb.sql
+cd <ruta_del_repo>
+
+# 2) Define tu cadena de conexión de Neon (incluye sslmode=require)
+$env:PGURL = "postgresql://USER:PASSWORD@HOST:5432/DB?sslmode=require"
+
+# 3) Ejecuta psql dentro de un contenedor y aplica el SQL del respaldo
+docker run --rm -v ${PWD}:/work postgres:16-alpine \
+  sh -lc "psql -d '$PGURL' -f /work/reservasdb.sql"
+```
+
+Si falla por SSL, asegúrate de tener `?sslmode=require` en la URL de conexión.
+
+### 2) Desplegar en Koyeb (simple y rápido)
+
+1. Ve a https://www.koyeb.com/ y crea una App nueva conectando este repo de GitHub, o elige "Dockerfile" si subes desde Git directamente.
+2. Parámetros clave:
+  - Runtime/Build: usa el Dockerfile del repo.
+  - Puerto interno: 5000 (la app expone 5000). Koyeb publicará un URL HTTPS.
+  - Variables de entorno:
+    - `FLASK_SECRET_KEY`: una cadena aleatoria larga.
+    - `PORT`: `5000`.
+    - `DATABASE_URL`: Pega el connection string de Neon.
+    - (Opcional) `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`.
+3. Health check: apunta a `/health` (ya agregado) o al puerto 5000.
+4. Deploy. Koyeb construirá la imagen y arrancará el servicio. En los logs verás "Aplicando migraciones Alembic..." y luego Gunicorn escuchando.
+
+### 3) Desplegar en Fly.io (opción alternativa)
+
+1. Instala la CLI: https://fly.io/docs/hands-on/install/
+2. En este repo, ejecuta `fly launch` y responde:
+  - Usa el Dockerfile.
+  - App name único.
+  - Puerto interno: 5000.
+3. Configura variables en Fly (Dashboard o CLI):
+  - `FLASK_SECRET_KEY`: cadena aleatoria.
+  - `PORT`: `5000`.
+  - `DATABASE_URL`: tu cadena de Neon.
+4. `fly deploy` para construir y publicar.
+
+Nota: Puedes usar también Railway para alojar la app y su Postgres gratis, pero sus cuotas free suelen agotarse rápido.
+
+### Migraciones y datos
+
+- La app corre `flask db upgrade` automáticamente al iniciar (ver `entrypoint.sh`).
+- Para ejecutar comandos manuales en Koyeb/Fly, usa una shell/exec del proveedor y corre:
+
+```bash
+flask db migrate -m "tu_cambio" && flask db upgrade
+```
+
+### Variables de entorno mínimas en producción
+
+- `FLASK_SECRET_KEY`: obligatorio (si falta, la app no arranca en producción).
+- `DATABASE_URL`: obligatorio en los proveedores (Neon/Supabase/Railway).
+- `PORT`: `5000` (algunos proveedores te la fijan automáticamente; respétala si es así).
+- SMTP (opcional) si usarás recuperación de contraseña real.
+
+### Endpoints útiles
+
+- `GET /health` -> Responde `{"status": "ok"}` para health checks.
+- App pública en `/` y resto de rutas.
+
+### Bootstrap de usuario administrador
+
+Para crear rápidamente un usuario admin en cualquier entorno (local, Koyeb, Fly, VPS):
+
+1. Establece variables de entorno:
+
+```powershell
+$env:ADMIN_EMAIL="admin@tu-dominio.com"
+$env:ADMIN_PASSWORD="UnaContraseñaSegura123"  # mínimo 6 caracteres
+```
+
+2. Ejecuta el script dentro del contenedor o entorno donde corre la app:
+
+```powershell
+python scripts/seed_admin.py
+```
+
+Con Docker Compose:
+
+```powershell
+docker compose exec web bash -c "export ADMIN_EMAIL=admin@tu-dominio.com ADMIN_PASSWORD=UnaContraseñaSegura123; python scripts/seed_admin.py"
+```
+
+El script no sobrescribe usuarios existentes; si ya hay un usuario con ese correo mostrará un mensaje y no hará cambios.
+
+### Generar `FLASK_SECRET_KEY`
+
+Puedes generar una clave aleatoria robusta con:
+
+```powershell
+python scripts/generate_secret.py
+```
+
+Luego toma la salida y ponla en `FLASK_SECRET_KEY` en tu panel de variables del proveedor.
+
 ## Notas
 - El formulario POST a /enviar-respuesta renderiza una página de "gracias" con los datos.
 - La imagen local se sirve desde la carpeta `img` original usando la ruta `/img/<archivo>`.

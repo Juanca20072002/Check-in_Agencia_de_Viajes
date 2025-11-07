@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 set -e
 
+# Debug rápido de variables de entorno relacionadas con la base de datos
+echo "DEBUG: DATABASE_URL='${DATABASE_URL}'" || true
+echo "DEBUG: POSTGRES_USER='${POSTGRES_USER}' POSTGRES_PW='${POSTGRES_PW}' POSTGRES_DB='${POSTGRES_DB}' POSTGRES_HOST='${POSTGRES_HOST}' POSTGRES_PORT='${POSTGRES_PORT}'" || true
+
 # Esperar a Postgres usando psycopg2
 echo "Esperando a Postgres..."
 python - <<'PY'

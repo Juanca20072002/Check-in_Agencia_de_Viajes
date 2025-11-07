@@ -12,14 +12,62 @@ from email.message import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
+# Secret key: require it in non-development environments to avoid weak defaults
+FLASK_SECRET_KEY = os.environ.get("FLASK_SECRET_KEY")
+if not FLASK_SECRET_KEY:
+    # If running in development, allow a default for convenience. In any other
+    # environment we must fail early to avoid predictable secrets.
+    if os.environ.get("FLASK_ENV", "production") == "development":
+        app.secret_key = "dev-secret-key"
+    else:
+        raise RuntimeError("FLASK_SECRET_KEY is not set. Set it in the environment before starting the app.")
+else:
+    app.secret_key = FLASK_SECRET_KEY
 
 
 # Configuración de la base de datos
-DATABASE_URL = os.environ.get("DATABASE_URL")
+def _discover_db_uri() -> str | None:
+    """Resuelve la URI de la base de datos desde varias variables comunes.
+
+    Orden de búsqueda:
+    - DATABASE_URL
+    - DATABASE_URI
+    - POSTGRES_URL
+    - POSTGRES_URI
+    """
+    keys = ["DATABASE_URL", "DATABASE_URI", "POSTGRES_URL", "POSTGRES_URI"]
+    for k in keys:
+        v = os.environ.get(k)
+        if v:
+            # Normalizar esquema postgres:// a postgresql:// si es necesario
+            if v.startswith("postgres://"):
+                v = "postgresql://" + v[len("postgres://"):]
+            # Asegurar sslmode=require para hosts de Neon si no está presente
+            try:
+                from urllib.parse import urlparse, parse_qs, urlencode
+                parsed = urlparse(v)
+                if parsed.hostname and parsed.hostname.endswith(".neon.tech"):
+                    query = parse_qs(parsed.query)
+                    if "sslmode" not in query:
+                        sep = "&" if parsed.query else "?"
+                        v = v + f"{sep}sslmode=require"
+            except Exception:
+                pass
+            print(f"Usando '{k}' para DB")
+            return v
+    return None
+
+DATABASE_URL = _discover_db_uri()
 if DATABASE_URL:
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-    print("DB URI:", DATABASE_URL)
+    # Evitar imprimir credenciales completas en logs
+    try:
+        from urllib.parse import urlparse
+        _p = urlparse(DATABASE_URL)
+        redacted = f"{_p.scheme}://{_p.hostname}:{_p.port or ''}{_p.path}"
+        print("DB URI:", redacted)
+    except Exception:
+        print("DB URI establecida desde entorno")
 else:
     POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
     POSTGRES_PW = os.environ.get("POSTGRES_PW", "12345")
@@ -29,13 +77,27 @@ else:
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"postgresql://{POSTGRES_USER}:{POSTGRES_PW}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
     )
-    print("DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])
+    print("DB URI (por defecto local):", app.config["SQLALCHEMY_DATABASE_URI"])
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+# Security-related cookie settings
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    REMEMBER_COOKIE_SECURE=True,
+    REMEMBER_COOKIE_HTTPONLY=True
+)
+
+# Healthcheck simple para proveedores de despliegue
+@app.get("/health")
+def health():
+    return {"status": "ok"}, 200
 
 # Configuración de correo (Gmail)
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
@@ -474,8 +536,11 @@ def admin_detalle_viaje(id):
     viaje = Viaje.query.get_or_404(id)
     return render_template('admin/viajes/detalle.html', viaje=viaje)
 
-with app.app_context():
-    db.create_all()
+# Only create DB tables automatically in development or when explicitly requested.
+# Production should rely on Alembic migrations (flask db upgrade).
+if os.environ.get("FLASK_ENV", "production") == "development" or os.environ.get("FLASK_RUN_CREATE_ALL", "0") == "1":
+    with app.app_context():
+        db.create_all()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

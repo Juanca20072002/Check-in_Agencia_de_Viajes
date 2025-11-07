@@ -1,0 +1,59 @@
+# Manifest de despliegue para Koyeb
+# Referencia: https://www.koyeb.com/docs/deploy/deploy-with-yaml
+# Ajusta NOMBRE_APP y completa las variables sensibles antes de usar.
+
+services:
+  - name: viajes-app
+    git:
+      # URL de tu repositorio público (HTTPS). Si es privado, conecta repo vía panel y puedes omitir aquí.
+      repo: https://github.com/Juanca20072002/Check-in_Agencia_de_Viajes
+      branch: main
+      # Usamos el Dockerfile existente para construir la imagen.
+      dockerfile: Dockerfile
+    ports:
+      - port: 5000
+        http_options:
+          # Health check ya que existe /health devolviendo {"status": "ok"}
+          healthcheck:
+            path: /health
+            interval: 30s
+            timeout: 5s
+            method: GET
+    # Escalado simple: 1 instancia (free). Puedes ajustar memoria/CPU desde el panel.
+    instance_type: "nano"  # nano / micro / small ... (según disponibilidad free tier)
+    env:
+      # IMPORTANTE: No subas claves reales en el repo público; reemplaza luego vía panel (override) o usa secrets.
+      - key: PORT
+        value: "5000"
+      - key: FLASK_SECRET_KEY
+        value: "REEMPLAZA_CON_SECRETO"   # Genera con scripts/generate_secret.py
+      - key: DATABASE_URL
+        value: "postgresql://USER:PASSWORD@HOST:5432/DB?sslmode=require"  # Neon URL
+      # Opcionales SMTP
+      # - key: SMTP_HOST
+      #   value: "smtp.tu-proveedor.com"
+      # - key: SMTP_PORT
+      #   value: "587"
+      # - key: SMTP_USER
+      #   value: "usuario"
+      # - key: SMTP_PASS
+      #   value: "password"
+      # - key: SMTP_TLS
+      #   value: "true"
+    # Variables para script de seeding (puedes setearlas temporalmente desde el panel y luego quitarlas)
+      # - key: ADMIN_EMAIL
+      #   value: "admin@tu-dominio.com"
+      # - key: ADMIN_PASSWORD
+      #   value: "UnaContraseñaSegura123"
+
+    # Comando: usamos el definido en Dockerfile/entrypoint, así que no redefinimos cmd.
+    # Si quisieras forzar gunicorn directamente, podrías usar:
+    # cmd: ["/bin/sh", "-c", "flask db upgrade && gunicorn -w 3 -b 0.0.0.0:$PORT app:app"]
+
+# Notas:
+# 1. Después de desplegar, revisa logs para confirmar 'Aplicando migraciones Alembic'.
+# 2. Para crear el usuario admin en producción:
+#    - Agrega temporalmente ADMIN_EMAIL y ADMIN_PASSWORD como env vars.
+#    - Abre una consola/exec y ejecuta: python scripts/seed_admin.py
+#    - Elimina esas env vars (opcional) tras crear el usuario.
+# 3. Si cambias modelos, crea migración local y haz commit para que el contenedor ejecute flask db upgrade al iniciar.
