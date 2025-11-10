@@ -10,6 +10,7 @@ import os
 import smtplib
 from email.message import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from sqlalchemy.exc import OperationalError
 
 app = Flask(__name__)
 # Secret key: require it in non-development environments to avoid weak defaults
@@ -36,29 +37,46 @@ def _discover_db_uri() -> str | None:
     - POSTGRES_URI
     """
     keys = ["DATABASE_URL", "DATABASE_URI", "POSTGRES_URL", "POSTGRES_URI"]
+    from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
     for k in keys:
         v = os.environ.get(k)
         if v:
             # Normalizar esquema postgres:// a postgresql:// si es necesario
             if v.startswith("postgres://"):
                 v = "postgresql://" + v[len("postgres://"):]
-            # Asegurar sslmode=require para hosts de Neon si no está presente
+
+            # Parsear y reconstruir la URL de forma segura. Evita
+            # concatenaciones manuales que pueden generar cadenas
+            # como '?sslmode' sin clave/valor o values truncados.
             try:
-                from urllib.parse import urlparse, parse_qs, urlencode
                 parsed = urlparse(v)
-                if parsed.hostname and parsed.hostname.endswith(".neon.tech"):
-                    query = parse_qs(parsed.query)
-                    if "sslmode" not in query:
-                        sep = "&" if parsed.query else "?"
-                        v = v + f"{sep}sslmode=require"
+                scheme = parsed.scheme
+                netloc = parsed.netloc
+                path = parsed.path
+                params = parsed.params
+                query_items = dict(parse_qsl(parsed.query, keep_blank_values=True))
+
+                # Si el host es de Neon y no tenemos sslmode, añadirlo
+                host = parsed.hostname or ""
+                if host.endswith(".neon.tech") and "sslmode" not in query_items:
+                    query_items["sslmode"] = "require"
+
+                # Reconstruir query y URL completa
+                new_query = urlencode(query_items, doseq=True)
+                rebuilt = urlunparse((scheme, netloc, path, params, new_query, parsed.fragment))
+
+                print(f"Usando '{k}' para DB")
+                return rebuilt
             except Exception:
-                pass
-            print(f"Usando '{k}' para DB")
-            return v
+                # Si falla el parsing, retornar el valor tal cual — el chequeo
+                # posterior de la conexión mostrará el error real.
+                print(f"Usando '{k}' para DB (sin normalizar)")
+                return v
     return None
 
 DATABASE_URL = _discover_db_uri()
 if DATABASE_URL:
+    # Establecer la URI de SQLAlchemy correctamente
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     # Evitar imprimir credenciales completas en logs
     try:
@@ -66,6 +84,13 @@ if DATABASE_URL:
         _p = urlparse(DATABASE_URL)
         redacted = f"{_p.scheme}://{_p.hostname}:{_p.port or ''}{_p.path}"
         print("DB URI:", redacted)
+        # Diagnostics (no secrets): indicar si la URI incluye credenciales y puerto
+        try:
+            has_user = bool(_p.username)
+            has_port = _p.port is not None
+            print(f"DB INFO: host={_p.hostname} has_user={has_user} has_port={has_port}")
+        except Exception:
+            pass
     except Exception:
         print("DB URI establecida desde entorno")
 else:
@@ -79,11 +104,36 @@ else:
     )
     print("DB URI (por defecto local):", app.config["SQLALCHEMY_DATABASE_URI"])
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Engine options: enable pool_pre_ping to detect/reconnect dead connections
+# and set reasonable pool sizing. This helps avoid 'psycopg2.OperationalError: SSL connection closed unexpectedly'
+# which commonly happens when a pooled connection was closed by the server/network.
+app.config.setdefault('SQLALCHEMY_ENGINE_OPTIONS', {})
+engine_opts = app.config['SQLALCHEMY_ENGINE_OPTIONS']
+# Don't overwrite if already set by environment or other code; merge sensible defaults.
+engine_opts.setdefault('pool_pre_ping', True)
+engine_opts.setdefault('pool_size', int(os.environ.get('SQLALCHEMY_POOL_SIZE', 5)))
+engine_opts.setdefault('max_overflow', int(os.environ.get('SQLALCHEMY_MAX_OVERFLOW', 10)))
+engine_opts.setdefault('pool_recycle', int(os.environ.get('SQLALCHEMY_POOL_RECYCLE', 1800)))
+# If the DATABASE_URL didn't include sslmode, ensure psycopg2 uses require as a fallback
+# (connect_args is accepted by SQLAlchemy create_engine and passed to psycopg2).
+connect_args = engine_opts.get('connect_args', {})
+if 'sslmode' not in connect_args:
+    # If DATABASE_URL already contains sslmode via query string, psycopg2 will use it; this just ensures a fallback.
+    connect_args.setdefault('sslmode', 'require')
+engine_opts['connect_args'] = connect_args
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+
+@app.errorhandler(OperationalError)
+def handle_db_operational_error(e):
+    # Log full exception; return a 503 so clients know it's a temporary service issue
+    app.logger.exception("OperationalError caught by errorhandler: %s", e)
+    return ("Servicio temporalmente no disponible por problemas con la base de datos. Por favor intenta más tarde.", 503)
 
 # Security-related cookie settings
 app.config.update(
@@ -177,7 +227,16 @@ class Usuario(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return Usuario.query.get(int(user_id))
+    try:
+        return Usuario.query.get(int(user_id))
+    except OperationalError as e:
+        # DB temporarily unavailable (SSL/network); return None so Flask-Login treats user as anonymous
+        # and avoid raising a 500 on page loads. The error is logged for diagnostics.
+        app.logger.error("DB OperationalError in load_user: %s", e)
+        return None
+    except Exception as e:
+        app.logger.exception("Unexpected error in load_user: %s", e)
+        return None
 
 # Ruta para la página principal
 @app.route("/")
